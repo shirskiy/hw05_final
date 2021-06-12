@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %} {{ poster }} {% endblock %}
+<main role="main" class="container">
+    <div class="row">
+        {% block content %}
+        <!-- Автор поста -->
+        {% include 'includes/card_author.html' %}
+
+        <div class="card mb-3 mt-1 shadow-sm">
+            <!-- Начало блока с отдельным постом -->
+            {% for post in page %}
+
+
+
+
+            {% include 'includes/post_item.html' %}
+
+            {% endfor %}
+
+            {% include "includes/paginator.html" %}
+
+        </div>
+        {% endblock %}
+    </div>
+</main>

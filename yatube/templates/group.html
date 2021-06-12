@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+
+<meta charset="utf-8">
+{% block title %}Записи сообщества {{ group.title }} {% endblock %}
+
+{% block content %}
+<h1>
+  {{ group.title }}
+</h1>
+<p>
+  {{ group.description }}
+</p>
+{% for post in page %}
+<h3>
+  Автор: {{ post.author }}, дата публикации: {{ post.pub_date|date:"d M Y" }}
+
+</h3>
+<p>
+  {{ post.text }}
+</p>
+{% endfor %}
+{% include "includes/paginator.html" %}
+<hr>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+<main role="main" class="container">
+    <div class="row">
+        {% block content %}
+        <!-- Автор поста -->
+        {% include 'includes/card_author.html' %}
+
+        <div class="card mb-3 mt-1 shadow-sm">
+
+
+            <!-- Пост -->
+            {% include 'includes/post_item.html' %}
+
+            {% include 'includes/comments.html' %}
+
+        </div>
+        {% endblock %}
+    </div>
+</main>
