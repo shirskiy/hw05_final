@@ -9,17 +9,11 @@
         <div class="card mb-3 mt-1 shadow-sm">
             <!-- Начало блока с отдельным постом -->
             {% for post in page %}
-
-
-
-
             {% include 'includes/post_item.html' %}
-
             {% endfor %}
-
             {% include "includes/paginator.html" %}
-
         </div>
+
         {% endblock %}
     </div>
 </main>
