@@ -3,7 +3,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..models import Comment, Follow, Group, Post, User
+from ..models import Follow, Group, Post, User
 
 
 class TestViewsContext(TestCase):
@@ -128,7 +128,6 @@ class TestViewsContext(TestCase):
         form = response.context['form']
         post_text = form['text'].value()
         self.assertEqual(TestViewsContext.post.text, post_text)
-
 
 
 class TestPaginator(TestCase):
