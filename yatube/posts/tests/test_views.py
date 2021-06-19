@@ -46,8 +46,6 @@ class TestViewsContext(TestCase):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)  # логинемся как юзер
-        self.post_url = (f'/{TestViewsContext.author}/'
-                         f'{TestViewsContext.post.id}/')
         self.reverse_list_with_no_pagese = [
             reverse('post', kwargs={'username': TestViewsContext.author,
                                     'post_id': TestViewsContext.post.id})
@@ -133,6 +131,22 @@ class TestViewsContext(TestCase):
         post_text = form['text'].value()
         self.assertEqual(TestViewsContext.post.text, post_text)
 
+    def test_follow(self):
+        Follow.objects.create(user=TestViewsContext.user,
+                              author=TestViewsContext.author)
+        self.assertTrue(
+            Follow.objects.filter(user=TestViewsContext.user,
+                                  author=TestViewsContext.author).exists())
+
+    def test_unfollow(self):
+        Follow.objects.create(user=TestViewsContext.user,
+                              author=TestViewsContext.author)
+        Follow.objects.filter(user=TestViewsContext.user,
+                              author=TestViewsContext.author).delete()
+        self.assertFalse(
+            Follow.objects.filter(user=TestViewsContext.user,
+                                  author=TestViewsContext.author).exists())
+
 
 class TestPaginator(TestCase):
     @ classmethod
@@ -181,3 +195,14 @@ class TestCashe(TestCase):
         response = TestCashe.guest_client.get(reverse('index'))
         cache.clear()
         self.assertNotEqual(cached_response_content, response.content)
+
+
+# class TestFollow(TestCase):
+#     @classmethod
+#     def setUpClass(cls):
+#         super().setUpClass()
+#         cls.author = User.objects.create_user(username='Author')
+#         cls.follower = User.objects.create_user(username='Follower')
+
+#     def test_follow(self):
+#         pass
