@@ -17,3 +17,11 @@ class GroupAdmin(admin.ModelAdmin):
     list_display = ('pk', 'title', 'slug', 'description')
     search_fields = ('text',)
     empty_value_display = '-пусто-'
+
+
+@admin.register(models.Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'post', 'author', 'text', 'created')
+    search_fields = ('text',)
+    list_filter = ('created',)
+    empty_value_display = '-пусто-'

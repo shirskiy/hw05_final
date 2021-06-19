@@ -58,11 +58,16 @@ def profile(request, username):
     page = paginator.get_page(page_number)
     following = ''
     if request.user.is_authenticated:
-        following = Follow.objects.filter(user=request.user, author=poster)
+        following = Follow.objects.filter(
+            user=request.user, author=poster).exists()
+    followers = Follow.objects.filter(author=poster).count()
+    followed = Follow.objects.filter(user=poster).count()
     context = {'poster': poster,
                'page': page,
                'num_posts': num_posts,
                'following': following,
+               'followers': followers,
+               'followed': followed,
                }
     return render(
         request,
@@ -92,6 +97,7 @@ def post_view(request, username, post_id):
     )
 
 
+@login_required
 def post_edit(request, username, post_id):
     author_id = get_object_or_404(User, username=username).id
     if request.user.id != author_id:
@@ -168,12 +174,7 @@ def profile_follow(request, username):
     user = request.user
     author = get_object_or_404(User, username=username)
     if user != author:
-        follow = Follow.objects.filter(
-            user=user,
-            author=author
-        )
-        if not follow:
-            Follow.objects.create(user=user, author=author)
+        Follow.objects.get_or_create(user=user, author=author)
     return redirect('profile', username=author)
 
 

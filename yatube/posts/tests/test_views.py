@@ -46,15 +46,18 @@ class TestViewsContext(TestCase):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)  # логинемся как юзер
-        self.url_list_with_pages = [
-            '/',  # Главная страница
-            f'/group/{TestViewsContext.group.slug}/',  # Страница группы
-            f'/{TestViewsContext.author}/',  # Страница профайла
-            '/follow/',  # Страница отслеживаемых
-        ]
         self.post_url = (f'/{TestViewsContext.author}/'
                          f'{TestViewsContext.post.id}/')
-
+        self.reverse_list_with_no_pagese = [
+            reverse('post', kwargs={'username': TestViewsContext.author,
+                                    'post_id': TestViewsContext.post.id})
+        ]
+        self.reverse_list_with_pages = [
+            reverse('index'),
+            reverse('group', kwargs={'slug': TestViewsContext.group.slug}),
+            reverse('profile', kwargs={'username': TestViewsContext.author}),
+            reverse('follow_index')
+        ]
         # фолловим юзером автора
         Follow.objects.create(user=TestViewsContext.user,
                               author=TestViewsContext.author)
@@ -77,7 +80,7 @@ class TestViewsContext(TestCase):
     def test_index_and_group_shows_correct_context(self):
         """На главной на странице, группы, пользователя, follow
         выводится правильный context"""
-        for url in self.url_list_with_pages:
+        for url in self.reverse_list_with_pages:
             with self.subTest(url=url):
                 response = self.authorized_client.get(url)
                 response_post = response.context['page'][0]
@@ -85,14 +88,15 @@ class TestViewsContext(TestCase):
 
     def test_post_page_shows_correct_context(self):
         """На странице поста выводится правильный context"""
-        response = self.guest_client.get(self.post_url)
+        response = self.guest_client.get(self.reverse_list_with_no_pagese[0])
         response_post = response.context['post']
         self.assertEqual(TestViewsContext.post, response_post)
 
     def test_new_group_post_dont_append_at_wrong_group(self):
         """Групповой пост не отоброжается в другой группе"""
         response = self.authorized_client.get(
-            f'/group/{TestViewsContext.wrong_group.slug}/')
+            reverse('group',
+                    kwargs={'slug': TestViewsContext.wrong_group.slug}))
         self.assertNotContains(response, TestViewsContext.post.text)
 
     def test_new_post_for_followers(self):
@@ -102,7 +106,7 @@ class TestViewsContext(TestCase):
             text='Текст нового поста',
             author=TestViewsContext.author,
         )
-        response = self.authorized_client.get('/follow/')
+        response = self.authorized_client.get(reverse('follow_index'))
         response_post_text = response.context['page'][0].text
         self.assertEqual(response_post_text, 'Текст нового поста')
 
@@ -110,7 +114,7 @@ class TestViewsContext(TestCase):
         """Записи не появляются у тех, кто не подписан"""
         Follow.objects.filter(user=TestViewsContext.user,
                               author=TestViewsContext.author).delete()
-        response = self.authorized_client.get('/follow/')
+        response = self.authorized_client.get(reverse('follow_index'))
         self.assertNotContains(response, TestViewsContext.post.text)
 
     def test_edit_page_context(self):
