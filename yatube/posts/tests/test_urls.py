@@ -28,23 +28,34 @@ class UrlTests(TestCase):
         self.not_author = User.objects.create_user(username='Not_Author')
         self.not_author_client = Client()
         self.not_author_client.force_login(self.not_author)
-        self.urls_list_for_guest = [
-            '/',  # Главная страница
-            f'/group/{UrlTests.group.slug}/',  # Страница группы test_grp_slug
-            f'/{UrlTests.author}/',  # Страница пользователя TestUser
-            f'/{UrlTests.author}/{UrlTests.post.id}/',  # Страница поста
+        self.reverse_list_for_guest = [
+            # Главная страница
+            reverse('index'),
+            # Страница группы test_grp_slug
+            reverse('group', kwargs={'slug': UrlTests.group.slug}),
+            # Страница пользователя TestUser
+            reverse('profile', kwargs={'username': UrlTests.author}),
+            # Страница поста
+            reverse('post', kwargs={
+                    'username': UrlTests.author, 'post_id': UrlTests.post.id})
         ]
-        self.urls_list_for_user = [
-            '/new/',  # Страница создания поста
+        self.reverse_list_for_user = [
+            # Страница создания поста
+            reverse('new_post'),
         ]
-        self.urls_list_for_author = [
+        self.reverse_list_for_author = [
             # Страница редактирования поста
-            f'/{UrlTests.author}/{UrlTests.post.id}/edit/',
+            reverse('post_edit',
+                    kwargs={
+                        'username': UrlTests.author,
+                        'post_id': UrlTests.post.id
+                    }
+                    )
         ]
 
     def test_guest(self):
         """Проверьте доступность страниц проекта Yatube гостем."""
-        for url in self.urls_list_for_guest:
+        for url in self.reverse_list_for_guest:
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
                 self.assertEqual(
@@ -55,7 +66,7 @@ class UrlTests(TestCase):
     def test_no_access_guest(self):
         """У гостя нет доступа к новому посту, редактированию поста,
         комментированию поста"""
-        for url in (self.urls_list_for_user + self.urls_list_for_author):
+        for url in (self.reverse_list_for_user + self.reverse_list_for_author):
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
                 self.assertEqual(
@@ -65,7 +76,7 @@ class UrlTests(TestCase):
 
     def test_not_author(self):
         """Проверьте доступность страниц проекта Yatube юзером."""
-        for url in self.urls_list_for_user:
+        for url in self.reverse_list_for_user:
             with self.subTest(url=url):
                 response = self.not_author_client.get(url)
                 self.assertEqual(
@@ -76,7 +87,7 @@ class UrlTests(TestCase):
 
     def test_no_access_user(self):
         """У не автора нет доступа к редактированию поста"""
-        for url in (self.urls_list_for_author):
+        for url in (self.reverse_list_for_author):
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
                 self.assertEqual(
@@ -86,7 +97,7 @@ class UrlTests(TestCase):
 
     def test_author(self):
         """Проверьте доступность страниц проекта Yatube автором поста."""
-        for url in self.urls_list_for_author:
+        for url in self.reverse_list_for_author:
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertEqual(

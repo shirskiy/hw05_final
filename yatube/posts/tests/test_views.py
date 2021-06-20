@@ -131,22 +131,6 @@ class TestViewsContext(TestCase):
         post_text = form['text'].value()
         self.assertEqual(TestViewsContext.post.text, post_text)
 
-    def test_follow(self):
-        Follow.objects.create(user=TestViewsContext.user,
-                              author=TestViewsContext.author)
-        self.assertTrue(
-            Follow.objects.filter(user=TestViewsContext.user,
-                                  author=TestViewsContext.author).exists())
-
-    def test_unfollow(self):
-        Follow.objects.create(user=TestViewsContext.user,
-                              author=TestViewsContext.author)
-        Follow.objects.filter(user=TestViewsContext.user,
-                              author=TestViewsContext.author).delete()
-        self.assertFalse(
-            Follow.objects.filter(user=TestViewsContext.user,
-                                  author=TestViewsContext.author).exists())
-
 
 class TestPaginator(TestCase):
     @ classmethod
@@ -197,12 +181,87 @@ class TestCashe(TestCase):
         self.assertNotEqual(cached_response_content, response.content)
 
 
-# class TestFollow(TestCase):
-#     @classmethod
-#     def setUpClass(cls):
-#         super().setUpClass()
-#         cls.author = User.objects.create_user(username='Author')
-#         cls.follower = User.objects.create_user(username='Follower')
+class TestFollow(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.author = User.objects.create_user(username='Author')
+        cls.user = User.objects.create_user(username='User')
+        cls.post = Post.objects.create(
+            text='To followers',
+            author=TestFollow.author
+        )
 
-#     def test_follow(self):
-#         pass
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(TestFollow.user)
+
+    def test_follow(self):
+        followers_count = Follow.objects.filter(
+            author=TestFollow.author
+        ).count()
+        following_count = Follow.objects.filter(
+            user=TestFollow.user).count()
+        self.authorized_client.get(
+            reverse('profile_follow',
+                    kwargs={'username': TestFollow.author})
+        )
+        # Проверяем, что число фолловеров увеличилось на 1
+        self.assertEqual(followers_count + 1,
+                         Follow.objects.filter(
+                             author=TestFollow.author).count()
+                         )
+        # Проверяем, что число подписок увеличилось на 1
+        self.assertEqual(following_count + 1,
+                         Follow.objects.filter(
+                             user=TestFollow.user).count()
+                         )
+        # Проверяем, что подписка создалась
+        self.assertTrue(Follow.objects.filter(
+            user=TestFollow.user, author=TestFollow.author).exists()
+        )
+
+    def test_unfollow(self):
+        Follow.objects.create(user=TestFollow.user,
+                              author=TestFollow.author)
+        followers_count = Follow.objects.filter(
+            author=TestFollow.author
+        ).count()
+        following_count = Follow.objects.filter(
+            user=TestFollow.user
+        ).count()
+        self.authorized_client.get(
+            reverse('profile_unfollow',
+                    kwargs={'username': TestFollow.author})
+        )
+        # Проверяем, что число фолловеров уменьшилось
+        self.assertEqual(followers_count - 1,
+                         Follow.objects.filter(
+                             author=TestFollow.author).count()
+                         )
+        # Проверяем, что чилсо подписок уменьшилось
+        self.assertEqual(following_count - 1,
+                         Follow.objects.filter(user=TestFollow.user).count()
+                         )
+        self.assertFalse(Follow.objects.filter(
+            user=TestFollow.user, author=TestFollow.author).exists()
+        )
+
+    def test_cant_follow_yorself(self):
+        self.authorized_client.force_login(TestFollow.author)
+        followers_count = Follow.objects.filter(
+            author=TestFollow.author
+        ).count()
+        self.authorized_client.get(
+            reverse('profile_follow',
+                    kwargs={'username': TestFollow.author}
+                    )
+        )
+        # Проверяем, что число подписок не изменилось
+        self.assertEqual(followers_count,
+                         Follow.objects.filter(
+                             author=TestFollow.author).count()
+                         )
+        self.assertFalse(Follow.objects.filter(
+            user=TestFollow.author, author=TestFollow.author).exists()
+        )
